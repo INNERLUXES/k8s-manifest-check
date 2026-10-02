@@ -1,6 +1,6 @@
 {
   "name": "k8s-manifest-check",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Read a folder of Kubernetes manifest files (Pod, Deployment, StatefulSet, DaemonSet, ReplicaSet, Job, CronJob) and report the settings that make a workload unsafe or unreliable in production: Pod Security Standards (Baseline and Restricted), resource requests and limits, probes, image tags, replicas without a disruption budget, the namespace, and secrets written as plain environment values. Each finding names the file and line, the workload and the container, and quotes the Kubernetes documentation. Reads files only, with its own strict YAML reader, no dependencies.",
   "type": "module",
   "main": "src/index.js",

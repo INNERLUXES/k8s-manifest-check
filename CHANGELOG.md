@@ -1,5 +1,9 @@
 # Changes
 
+## 1.0.1
+
+- Tests: the check that a Windows-style path with a backslash gives a report path with forward slashes now runs only on Windows. On Linux and macOS a backslash is an ordinary character in a file name, so that folder does not exist there. The tool itself is unchanged.
+
 ## 1.0.0
 
 First release.

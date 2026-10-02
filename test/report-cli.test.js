@@ -57,8 +57,11 @@ test('input: a folder and one file give the same findings, and the path of the r
   assert.equal(folder.findings[0].file, 'prod/a.yaml');
   assert.equal(file.findings[0].file, 'a.yaml');
   assert.equal(folder.findings[0].id, file.findings[0].id);
-  const windows = JSON.parse((await run(files, ['k8s\\prod', '--format', 'json'])).out);
-  assert.ok(!windows.target.includes('\\'));
+  // A backslash separates folders only on Windows; on Linux and macOS it is a normal character in a file name.
+  if (process.platform === 'win32') {
+    const windows = JSON.parse((await run(files, ['k8s\\prod', '--format', 'json'])).out);
+    assert.ok(!windows.target.includes('\\'));
+  }
 });
 
 test('text report: the lines, the counts, the source with its address and the gate', async () => {
