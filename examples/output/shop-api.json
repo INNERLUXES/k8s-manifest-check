@@ -1,0 +1,738 @@
+{
+  "tool": "k8s-manifest-check",
+  "version": "1.0.0",
+  "target": "examples/shop-api",
+  "input": {
+    "files": [
+      {
+        "path": "api.yaml",
+        "bytes": 1576,
+        "documents": 2
+      },
+      {
+        "path": "worker.yaml",
+        "bytes": 1417,
+        "documents": 2
+      }
+    ],
+    "documents": 4,
+    "workloads": 3
+  },
+  "findings": [
+    {
+      "id": "namespace-missing",
+      "severity": "info",
+      "file": "api.yaml",
+      "line": 4,
+      "kind": "Deployment",
+      "name": "shop-api",
+      "container": "",
+      "profile": null,
+      "field": null,
+      "at": "metadata.namespace",
+      "message": "The manifest sets no namespace, so the object goes to the namespace of the current context, which is often default.",
+      "fix": "Set metadata.namespace, or apply the files with a namespace on the command line and keep that in the pipeline.",
+      "manual": [
+        {
+          "page": "Namespaces",
+          "section": "When to Use Multiple Namespaces",
+          "url": "https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/",
+          "quote": "For a production cluster, consider not using the default namespace. Instead, make other namespaces and use those."
+        }
+      ]
+    },
+    {
+      "id": "replicas-one-no-pdb",
+      "severity": "info",
+      "file": "api.yaml",
+      "line": 9,
+      "kind": "Deployment",
+      "name": "shop-api",
+      "container": "",
+      "profile": null,
+      "field": null,
+      "at": "spec.replicas",
+      "message": "The Deployment runs one replica, and no PodDisruptionBudget in the files selects its Pods. A voluntary disruption, such as draining a node, takes the only Pod down.",
+      "fix": "Run two or more replicas and add a PodDisruptionBudget, or accept the downtime on purpose.",
+      "manual": [
+        {
+          "page": "Disruptions",
+          "section": "Pod disruption budgets",
+          "url": "https://kubernetes.io/docs/concepts/workloads/pods/disruptions/",
+          "quote": "As an application owner, you can create a PodDisruptionBudget (PDB) for each application. A PDB limits the number of Pods of a replicated application that are down simultaneously from voluntary disruptions."
+        },
+        {
+          "page": "Disruptions",
+          "section": "Dealing with disruptions",
+          "url": "https://kubernetes.io/docs/concepts/workloads/pods/disruptions/",
+          "quote": "Replicate your application if you need higher availability."
+        },
+        {
+          "page": "Specifying a Disruption Budget for your Application",
+          "section": "Think about how your application reacts to disruptions",
+          "url": "https://kubernetes.io/docs/tasks/run-application/configure-pdb/",
+          "quote": "Possible Solution 1: Do not use a PDB and tolerate occasional downtime."
+        },
+        {
+          "page": "Specifying a Disruption Budget for your Application",
+          "section": "Identify an Application to Protect",
+          "url": "https://kubernetes.io/docs/tasks/run-application/configure-pdb/",
+          "quote": "In this case, make a note of the controller's .spec.selector; the same selector goes into the PDBs .spec.selector."
+        }
+      ]
+    },
+    {
+      "id": "pss-host-namespaces",
+      "severity": "error",
+      "file": "api.yaml",
+      "line": 18,
+      "kind": "Deployment",
+      "name": "shop-api",
+      "container": "",
+      "profile": "Baseline",
+      "field": "spec.hostNetwork",
+      "at": "spec.template.spec.hostNetwork",
+      "message": "hostNetwork is true, so the Pod shares the host's namespace. The Baseline profile of the Pod Security Standards disallows it.",
+      "fix": "Remove hostNetwork, or set it to false.",
+      "manual": [
+        {
+          "page": "Pod Security Standards",
+          "section": "Baseline",
+          "url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+          "quote": "Sharing the host namespaces must be disallowed."
+        }
+      ]
+    },
+    {
+      "id": "resources-requests-missing",
+      "severity": "warning",
+      "file": "api.yaml",
+      "line": 20,
+      "kind": "Deployment",
+      "name": "shop-api",
+      "container": "api",
+      "profile": null,
+      "field": null,
+      "at": "spec.template.spec.containers[0].resources.requests",
+      "message": "The container has no resource request for cpu and memory. The scheduler cannot place it by what it needs, and the node can evict it first when memory runs short.",
+      "fix": "Set resources.requests.cpu and resources.requests.memory to what the container uses in normal work.",
+      "manual": [
+        {
+          "page": "Resource Management for Pods and Containers",
+          "section": "Resource Management for Pods and Containers",
+          "url": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+          "quote": "When you specify the resource request for containers in a Pod, the kube-scheduler uses this information to decide which node to place the Pod on."
+        },
+        {
+          "page": "Resource Management for Pods and Containers",
+          "section": "How Pods with resource requests are scheduled",
+          "url": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+          "quote": "The scheduler ensures that, for each resource type, the sum of the resource requests of the scheduled containers is less than the capacity of the node."
+        },
+        {
+          "page": "Resource Management for Pods and Containers",
+          "section": "How Kubernetes applies resource requests and limits",
+          "url": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+          "quote": "If a container exceeds its memory request and the node that it runs on becomes short of memory overall, it is likely that the Pod the container belongs to will be evicted."
+        }
+      ]
+    },
+    {
+      "id": "resources-limits-missing",
+      "severity": "warning",
+      "file": "api.yaml",
+      "line": 20,
+      "kind": "Deployment",
+      "name": "shop-api",
+      "container": "api",
+      "profile": null,
+      "field": null,
+      "at": "spec.template.spec.containers[0].resources.limits",
+      "message": "The container has no resource limit for cpu and memory, so nothing stops it from using more of it than it asked for.",
+      "fix": "Set resources.limits.memory (and resources.limits.cpu if you want a ceiling on CPU).",
+      "manual": [
+        {
+          "page": "Resource Management for Pods and Containers",
+          "section": "Resource Management for Pods and Containers",
+          "url": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+          "quote": "When you specify a resource limit for a container, the kubelet enforces those limits so that the running container is not allowed to use more of that resource than the limit you set."
+        },
+        {
+          "page": "Resource Management for Pods and Containers",
+          "section": "Requests and limits",
+          "url": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+          "quote": "memory limits are enforced by the kernel with out of memory (OOM) kills."
+        },
+        {
+          "page": "Resource Management for Pods and Containers",
+          "section": "Requests and limits",
+          "url": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+          "quote": "cpu limits are enforced by CPU throttling."
+        }
+      ]
+    },
+    {
+      "id": "readiness-probe-missing",
+      "severity": "warning",
+      "file": "api.yaml",
+      "line": 20,
+      "kind": "Deployment",
+      "name": "shop-api",
+      "container": "api",
+      "profile": null,
+      "field": null,
+      "at": "spec.template.spec.containers[0].readinessProbe",
+      "message": "The container has no readinessProbe (it has a livenessProbe, which does not wait for readiness), so the Pod receives traffic as soon as it starts, before the application can answer.",
+      "fix": "Add a readinessProbe (httpGet, tcpSocket, grpc or exec) that succeeds only when the application can answer.",
+      "manual": [
+        {
+          "page": "Liveness, Readiness, and Startup Probes",
+          "section": "Readiness probe",
+          "url": "https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/",
+          "quote": "Readiness probes determine when a container is ready to accept traffic."
+        },
+        {
+          "page": "Liveness, Readiness, and Startup Probes",
+          "section": "When should you use a readiness probe?",
+          "url": "https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/",
+          "quote": "To start sending traffic to a Pod only when a probe succeeds, specify a readiness probe."
+        },
+        {
+          "page": "Liveness, Readiness, and Startup Probes",
+          "section": "Readiness probe",
+          "url": "https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/",
+          "quote": "If the readiness probe returns a failed state, the EndpointSlice controller removes the Pod's IP address from the EndpointSlices of all Services that match the Pod."
+        },
+        {
+          "page": "Liveness, Readiness, and Startup Probes",
+          "section": "Liveness probe",
+          "url": "https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/",
+          "quote": "Liveness probes do not wait for readiness probes to succeed."
+        }
+      ]
+    },
+    {
+      "id": "image-tag-latest",
+      "severity": "warning",
+      "file": "api.yaml",
+      "line": 21,
+      "kind": "Deployment",
+      "name": "shop-api",
+      "container": "api",
+      "profile": null,
+      "field": null,
+      "at": "spec.template.spec.containers[0].image",
+      "message": "The image registry.example/shop/api:latest uses the tag latest. Kubernetes cannot tell which version of the image is running, and a rollback does not return to the version before.",
+      "fix": "Use a tag that names a version, or the digest of the image (name@sha256:...).",
+      "manual": [
+        {
+          "page": "Images",
+          "section": "Image pull policy",
+          "url": "https://kubernetes.io/docs/concepts/containers/images/",
+          "quote": "You should avoid using the :latest tag when deploying containers in production as it is harder to track which version of the image is running and more difficult to roll back properly."
+        },
+        {
+          "page": "Images",
+          "section": "Image pull policy",
+          "url": "https://kubernetes.io/docs/concepts/containers/images/",
+          "quote": "Instead, specify a meaningful tag such as v1.42.0 and/or a digest."
+        },
+        {
+          "page": "Images",
+          "section": "Default image pull policy",
+          "url": "https://kubernetes.io/docs/concepts/containers/images/",
+          "quote": "if you omit the imagePullPolicy field, and the tag for the container image is :latest, imagePullPolicy is automatically set to Always."
+        },
+        {
+          "page": "Images",
+          "section": "Image pull policy",
+          "url": "https://kubernetes.io/docs/concepts/containers/images/",
+          "quote": "An image digest uniquely identifies a specific version of the image, so Kubernetes runs the same code every time it starts a container with that image name and digest specified."
+        }
+      ]
+    },
+    {
+      "id": "pss-host-port",
+      "severity": "error",
+      "file": "api.yaml",
+      "line": 24,
+      "kind": "Deployment",
+      "name": "shop-api",
+      "container": "api",
+      "profile": "Baseline",
+      "field": "spec.containers[*].ports[*].hostPort",
+      "at": "spec.template.spec.containers[0].ports[0].hostPort",
+      "message": "The container binds the port of the node 8080 with hostPort. The Baseline profile of the Pod Security Standards says host ports should be disallowed entirely, or restricted to a known list.",
+      "fix": "Remove hostPort and reach the container through a Service.",
+      "manual": [
+        {
+          "page": "Pod Security Standards",
+          "section": "Baseline",
+          "url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+          "quote": "HostPorts should be disallowed entirely (recommended) or restricted to a known list"
+        }
+      ]
+    },
+    {
+      "id": "env-secret-plain",
+      "severity": "warning",
+      "file": "api.yaml",
+      "line": 27,
+      "kind": "Deployment",
+      "name": "shop-api",
+      "container": "api",
+      "profile": null,
+      "field": null,
+      "at": "spec.template.spec.containers[0].env[0].value",
+      "message": "The environment variable DATABASE_PASSWORD is written in the manifest with a plain value, and its name says it holds a secret. The value is not shown here.",
+      "fix": "Keep the value in a Secret and read it with valueFrom.secretKeyRef.",
+      "manual": [
+        {
+          "page": "Secrets",
+          "section": "Secrets",
+          "url": "https://kubernetes.io/docs/concepts/configuration/secret/",
+          "quote": "A Secret is an object that contains a small amount of sensitive data such as a password, a token, or a key. Such information might otherwise be put in a Pod specification or in a container image."
+        },
+        {
+          "page": "Secrets",
+          "section": "Secrets",
+          "url": "https://kubernetes.io/docs/concepts/configuration/secret/",
+          "quote": "Because Secrets can be created independently of the Pods that use them, there is less risk of the Secret (and its data) being exposed during the workflow of creating, viewing, and editing Pods."
+        },
+        {
+          "page": "Secrets",
+          "section": "Using Secrets as environment variables",
+          "url": "https://kubernetes.io/docs/concepts/configuration/secret/",
+          "quote": "For each container in your Pod specification, add an environment variable for each Secret key that you want to use to the env[].valueFrom.secretKeyRef field."
+        }
+      ]
+    },
+    {
+      "id": "pss-privilege-escalation",
+      "severity": "warning",
+      "file": "api.yaml",
+      "line": 30,
+      "kind": "Deployment",
+      "name": "shop-api",
+      "container": "api",
+      "profile": "Restricted",
+      "field": "spec.containers[*].securityContext.allowPrivilegeEscalation",
+      "at": "spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation",
+      "message": "allowPrivilegeEscalation is not set to false. The Restricted profile of the Pod Security Standards allows only false.",
+      "fix": "Set securityContext.allowPrivilegeEscalation to false.",
+      "manual": [
+        {
+          "page": "Pod Security Standards",
+          "section": "Restricted",
+          "url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+          "quote": "Privilege escalation (such as via set-user-ID or set-group-ID file mode) should not be allowed."
+        }
+      ]
+    },
+    {
+      "id": "pss-run-as-non-root",
+      "severity": "warning",
+      "file": "api.yaml",
+      "line": 30,
+      "kind": "Deployment",
+      "name": "shop-api",
+      "container": "api",
+      "profile": "Restricted",
+      "field": "spec.containers[*].securityContext.runAsNonRoot",
+      "at": "spec.template.spec.containers[0].securityContext.runAsNonRoot",
+      "message": "runAsNonRoot is not set to true, on the container or on the Pod. The Restricted profile of the Pod Security Standards requires containers to run as non-root users.",
+      "fix": "Set securityContext.runAsNonRoot to true, on the container or on the Pod, and make sure the image runs as a user other than root.",
+      "manual": [
+        {
+          "page": "Pod Security Standards",
+          "section": "Restricted",
+          "url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+          "quote": "Containers must be required to run as non-root users."
+        },
+        {
+          "page": "Pod Security Standards",
+          "section": "Restricted",
+          "url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+          "quote": "The container fields may be undefined/nil if the pod-level spec.securityContext.runAsNonRoot is set to true."
+        }
+      ]
+    },
+    {
+      "id": "pss-seccomp-missing",
+      "severity": "warning",
+      "file": "api.yaml",
+      "line": 30,
+      "kind": "Deployment",
+      "name": "shop-api",
+      "container": "api",
+      "profile": "Restricted",
+      "field": "spec.containers[*].securityContext.seccompProfile.type",
+      "at": "spec.template.spec.containers[0].securityContext.seccompProfile.type",
+      "message": "No seccomp profile is set, on the container or on the Pod. The Restricted profile of the Pod Security Standards says that the absence of a profile is prohibited.",
+      "fix": "Set securityContext.seccompProfile.type to RuntimeDefault (or Localhost).",
+      "manual": [
+        {
+          "page": "Pod Security Standards",
+          "section": "Restricted",
+          "url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+          "quote": "Seccomp profile must be explicitly set to one of the allowed values. Both the Unconfined profile and the absence of a profile are prohibited."
+        },
+        {
+          "page": "Pod Security Standards",
+          "section": "Restricted",
+          "url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+          "quote": "The container fields may be undefined/nil if the pod-level spec.securityContext.seccompProfile.type field is set appropriately."
+        }
+      ]
+    },
+    {
+      "id": "pss-privileged",
+      "severity": "error",
+      "file": "api.yaml",
+      "line": 31,
+      "kind": "Deployment",
+      "name": "shop-api",
+      "container": "api",
+      "profile": "Baseline",
+      "field": "spec.containers[*].securityContext.privileged",
+      "at": "spec.template.spec.containers[0].securityContext.privileged",
+      "message": "The container runs privileged. The Baseline profile of the Pod Security Standards disallows it.",
+      "fix": "Remove privileged, or set it to false, and add only the capabilities the container needs.",
+      "manual": [
+        {
+          "page": "Pod Security Standards",
+          "section": "Baseline",
+          "url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+          "quote": "Privileged Pods disable most security mechanisms and must be disallowed."
+        },
+        {
+          "page": "Pod Security Standards",
+          "section": "Baseline",
+          "url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+          "quote": "If any of the listed containers fails to meet the requirements, the entire pod will fail validation."
+        }
+      ]
+    },
+    {
+      "id": "pss-capabilities-drop-all",
+      "severity": "warning",
+      "file": "api.yaml",
+      "line": 32,
+      "kind": "Deployment",
+      "name": "shop-api",
+      "container": "api",
+      "profile": "Restricted",
+      "field": "spec.containers[*].securityContext.capabilities.drop",
+      "at": "spec.template.spec.containers[0].securityContext.capabilities.drop",
+      "message": "The container does not drop ALL capabilities. The Restricted profile of the Pod Security Standards says containers must drop ALL capabilities.",
+      "fix": "Set securityContext.capabilities.drop to [ALL], and add back only what the container needs.",
+      "manual": [
+        {
+          "page": "Pod Security Standards",
+          "section": "Restricted",
+          "url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+          "quote": "Containers must drop ALL capabilities, and are only permitted to add back the NET_BIND_SERVICE capability."
+        }
+      ]
+    },
+    {
+      "id": "pss-capabilities-add",
+      "severity": "error",
+      "file": "api.yaml",
+      "line": 33,
+      "kind": "Deployment",
+      "name": "shop-api",
+      "container": "api",
+      "profile": "Baseline",
+      "field": "spec.containers[*].securityContext.capabilities.add",
+      "at": "spec.template.spec.containers[0].securityContext.capabilities.add",
+      "message": "The container adds SYS_ADMIN, which the Baseline profile of the Pod Security Standards does not list among the capabilities that may be added.",
+      "fix": "Remove these capabilities, or run the workload in a namespace that enforces the Privileged profile on purpose.",
+      "manual": [
+        {
+          "page": "Pod Security Standards",
+          "section": "Baseline",
+          "url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+          "quote": "Adding additional capabilities beyond those listed below must be disallowed."
+        }
+      ]
+    },
+    {
+      "id": "image-tag-missing",
+      "severity": "warning",
+      "file": "api.yaml",
+      "line": 39,
+      "kind": "Deployment",
+      "name": "shop-api",
+      "container": "log-shipper",
+      "profile": null,
+      "field": null,
+      "at": "spec.template.spec.containers[1].image",
+      "message": "The image registry.example/shop/log-shipper has no tag and no digest, so Kubernetes uses the tag latest.",
+      "fix": "Use a tag that names a version, or the digest of the image (name@sha256:...).",
+      "manual": [
+        {
+          "page": "Images",
+          "section": "Image names",
+          "url": "https://kubernetes.io/docs/concepts/containers/images/",
+          "quote": "If you don't specify a tag, Kubernetes assumes you mean the tag latest."
+        },
+        {
+          "page": "Images",
+          "section": "Image pull policy",
+          "url": "https://kubernetes.io/docs/concepts/containers/images/",
+          "quote": "You should avoid using the :latest tag when deploying containers in production as it is harder to track which version of the image is running and more difficult to roll back properly."
+        },
+        {
+          "page": "Images",
+          "section": "Default image pull policy",
+          "url": "https://kubernetes.io/docs/concepts/containers/images/",
+          "quote": "if you omit the imagePullPolicy field, and you don't specify the tag for the container image, imagePullPolicy is automatically set to Always."
+        },
+        {
+          "page": "Images",
+          "section": "Image pull policy",
+          "url": "https://kubernetes.io/docs/concepts/containers/images/",
+          "quote": "Instead, specify a meaningful tag such as v1.42.0 and/or a digest."
+        },
+        {
+          "page": "Images",
+          "section": "Image names",
+          "url": "https://kubernetes.io/docs/concepts/containers/images/",
+          "quote": "Digests are a unique identifier for a specific version of an image. Digests are hashes of the image's content, and are immutable. Tags can be moved to point to different images, but digests are fixed."
+        }
+      ]
+    },
+    {
+      "id": "pss-run-as-user-root",
+      "severity": "warning",
+      "file": "worker.yaml",
+      "line": 17,
+      "kind": "Deployment",
+      "name": "shop-worker",
+      "container": "",
+      "profile": "Restricted",
+      "field": "spec.securityContext.runAsUser",
+      "at": "spec.template.spec.securityContext.runAsUser",
+      "message": "runAsUser of the Pod is 0, which is root. The Restricted profile of the Pod Security Standards does not allow it.",
+      "fix": "Set runAsUser to a user id above 0.",
+      "manual": [
+        {
+          "page": "Pod Security Standards",
+          "section": "Restricted",
+          "url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+          "quote": "Containers must not set runAsUser to 0"
+        }
+      ]
+    },
+    {
+      "id": "pss-host-path",
+      "severity": "error",
+      "file": "worker.yaml",
+      "line": 20,
+      "kind": "Deployment",
+      "name": "shop-worker",
+      "container": "",
+      "profile": "Baseline",
+      "field": "spec.volumes[*].hostPath",
+      "at": "spec.template.spec.volumes[0].hostPath",
+      "message": "The volume spool is a hostPath volume, which mounts a path of the node into the Pod. The Baseline profile of the Pod Security Standards forbids it.",
+      "fix": "Use a persistentVolumeClaim, a configMap, a secret or an emptyDir instead of a path of the node.",
+      "manual": [
+        {
+          "page": "Pod Security Standards",
+          "section": "Baseline",
+          "url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+          "quote": "HostPath volumes must be forbidden."
+        }
+      ]
+    },
+    {
+      "id": "pss-privilege-escalation",
+      "severity": "warning",
+      "file": "worker.yaml",
+      "line": 23,
+      "kind": "Deployment",
+      "name": "shop-worker",
+      "container": "worker",
+      "profile": "Restricted",
+      "field": "spec.containers[*].securityContext.allowPrivilegeEscalation",
+      "at": "spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation",
+      "message": "allowPrivilegeEscalation is not set to false. The Restricted profile of the Pod Security Standards allows only false.",
+      "fix": "Set securityContext.allowPrivilegeEscalation to false.",
+      "manual": [
+        {
+          "page": "Pod Security Standards",
+          "section": "Restricted",
+          "url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+          "quote": "Privilege escalation (such as via set-user-ID or set-group-ID file mode) should not be allowed."
+        }
+      ]
+    },
+    {
+      "id": "pss-run-as-non-root",
+      "severity": "warning",
+      "file": "worker.yaml",
+      "line": 23,
+      "kind": "Deployment",
+      "name": "shop-worker",
+      "container": "worker",
+      "profile": "Restricted",
+      "field": "spec.containers[*].securityContext.runAsNonRoot",
+      "at": "spec.template.spec.containers[0].securityContext.runAsNonRoot",
+      "message": "runAsNonRoot is not set to true, on the container or on the Pod. The Restricted profile of the Pod Security Standards requires containers to run as non-root users.",
+      "fix": "Set securityContext.runAsNonRoot to true, on the container or on the Pod, and make sure the image runs as a user other than root.",
+      "manual": [
+        {
+          "page": "Pod Security Standards",
+          "section": "Restricted",
+          "url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+          "quote": "Containers must be required to run as non-root users."
+        },
+        {
+          "page": "Pod Security Standards",
+          "section": "Restricted",
+          "url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+          "quote": "The container fields may be undefined/nil if the pod-level spec.securityContext.runAsNonRoot is set to true."
+        }
+      ]
+    },
+    {
+      "id": "pss-seccomp-missing",
+      "severity": "warning",
+      "file": "worker.yaml",
+      "line": 23,
+      "kind": "Deployment",
+      "name": "shop-worker",
+      "container": "worker",
+      "profile": "Restricted",
+      "field": "spec.containers[*].securityContext.seccompProfile.type",
+      "at": "spec.template.spec.containers[0].securityContext.seccompProfile.type",
+      "message": "No seccomp profile is set, on the container or on the Pod. The Restricted profile of the Pod Security Standards says that the absence of a profile is prohibited.",
+      "fix": "Set securityContext.seccompProfile.type to RuntimeDefault (or Localhost).",
+      "manual": [
+        {
+          "page": "Pod Security Standards",
+          "section": "Restricted",
+          "url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+          "quote": "Seccomp profile must be explicitly set to one of the allowed values. Both the Unconfined profile and the absence of a profile are prohibited."
+        },
+        {
+          "page": "Pod Security Standards",
+          "section": "Restricted",
+          "url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+          "quote": "The container fields may be undefined/nil if the pod-level spec.securityContext.seccompProfile.type field is set appropriately."
+        }
+      ]
+    },
+    {
+      "id": "pss-capabilities-drop-all",
+      "severity": "warning",
+      "file": "worker.yaml",
+      "line": 23,
+      "kind": "Deployment",
+      "name": "shop-worker",
+      "container": "worker",
+      "profile": "Restricted",
+      "field": "spec.containers[*].securityContext.capabilities.drop",
+      "at": "spec.template.spec.containers[0].securityContext.capabilities.drop",
+      "message": "The container does not drop ALL capabilities. The Restricted profile of the Pod Security Standards says containers must drop ALL capabilities.",
+      "fix": "Set securityContext.capabilities.drop to [ALL], and add back only what the container needs.",
+      "manual": [
+        {
+          "page": "Pod Security Standards",
+          "section": "Restricted",
+          "url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+          "quote": "Containers must drop ALL capabilities, and are only permitted to add back the NET_BIND_SERVICE capability."
+        }
+      ]
+    },
+    {
+      "id": "resources-limits-missing",
+      "severity": "warning",
+      "file": "worker.yaml",
+      "line": 25,
+      "kind": "Deployment",
+      "name": "shop-worker",
+      "container": "worker",
+      "profile": null,
+      "field": null,
+      "at": "spec.template.spec.containers[0].resources.limits",
+      "message": "The container has no resource limit for cpu and memory, so nothing stops it from using more of it than it asked for.",
+      "fix": "Set resources.limits.memory (and resources.limits.cpu if you want a ceiling on CPU).",
+      "manual": [
+        {
+          "page": "Resource Management for Pods and Containers",
+          "section": "Resource Management for Pods and Containers",
+          "url": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+          "quote": "When you specify a resource limit for a container, the kubelet enforces those limits so that the running container is not allowed to use more of that resource than the limit you set."
+        },
+        {
+          "page": "Resource Management for Pods and Containers",
+          "section": "Requests and limits",
+          "url": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+          "quote": "memory limits are enforced by the kernel with out of memory (OOM) kills."
+        },
+        {
+          "page": "Resource Management for Pods and Containers",
+          "section": "Requests and limits",
+          "url": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+          "quote": "cpu limits are enforced by CPU throttling."
+        }
+      ]
+    },
+    {
+      "id": "image-tag-latest",
+      "severity": "warning",
+      "file": "worker.yaml",
+      "line": 50,
+      "kind": "CronJob",
+      "name": "nightly-report",
+      "container": "report",
+      "profile": null,
+      "field": null,
+      "at": "spec.jobTemplate.spec.template.spec.containers[0].image",
+      "message": "The image registry.example/shop/report:latest uses the tag latest. Kubernetes cannot tell which version of the image is running, and a rollback does not return to the version before.",
+      "fix": "Use a tag that names a version, or the digest of the image (name@sha256:...).",
+      "manual": [
+        {
+          "page": "Images",
+          "section": "Image pull policy",
+          "url": "https://kubernetes.io/docs/concepts/containers/images/",
+          "quote": "You should avoid using the :latest tag when deploying containers in production as it is harder to track which version of the image is running and more difficult to roll back properly."
+        },
+        {
+          "page": "Images",
+          "section": "Image pull policy",
+          "url": "https://kubernetes.io/docs/concepts/containers/images/",
+          "quote": "Instead, specify a meaningful tag such as v1.42.0 and/or a digest."
+        },
+        {
+          "page": "Images",
+          "section": "Default image pull policy",
+          "url": "https://kubernetes.io/docs/concepts/containers/images/",
+          "quote": "if you omit the imagePullPolicy field, and the tag for the container image is :latest, imagePullPolicy is automatically set to Always."
+        },
+        {
+          "page": "Images",
+          "section": "Image pull policy",
+          "url": "https://kubernetes.io/docs/concepts/containers/images/",
+          "quote": "An image digest uniquely identifies a specific version of the image, so Kubernetes runs the same code every time it starts a container with that image name and digest specified."
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "Documents of other kinds are counted and not checked: Service (1)."
+  ],
+  "counts": {
+    "error": 5,
+    "warning": 17,
+    "info": 2
+  },
+  "gate": {
+    "failOn": "error",
+    "pass": false,
+    "reason": "5 errors"
+  }
+}
