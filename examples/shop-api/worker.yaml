@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shop-worker
+  namespace: shop
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: shop-worker
+  template:
+    metadata:
+      labels:
+        app: shop-worker
+    spec:
+      securityContext:
+        runAsUser: 0
+      volumes:
+        - name: spool
+          hostPath:
+            path: /var/spool/shop
+      containers:
+        - name: worker
+          image: registry.example/shop/worker:2.4.1
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          readinessProbe:
+            tcpSocket:
+              port: 9000
+          volumeMounts:
+            - name: spool
+              mountPath: /spool
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: nightly-report
+  namespace: shop
+spec:
+  schedule: "0 3 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: report
+              image: registry.example/shop/report:latest
+              command: ["/bin/report", "--all"]
+              resources:
+                requests: {cpu: 100m, memory: 128Mi}
+                limits: {cpu: 200m, memory: 256Mi}
+              securityContext:
+                allowPrivilegeEscalation: false
+                runAsNonRoot: true
+                seccompProfile: {type: RuntimeDefault}
+                capabilities: {drop: [ALL]}

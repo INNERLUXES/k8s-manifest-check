@@ -1,0 +1,48 @@
+{
+  "name": "k8s-manifest-check",
+  "version": "1.0.0",
+  "description": "Read a folder of Kubernetes manifest files (Pod, Deployment, StatefulSet, DaemonSet, ReplicaSet, Job, CronJob) and report the settings that make a workload unsafe or unreliable in production: Pod Security Standards (Baseline and Restricted), resource requests and limits, probes, image tags, replicas without a disruption budget, the namespace, and secrets written as plain environment values. Each finding names the file and line, the workload and the container, and quotes the Kubernetes documentation. Reads files only, with its own strict YAML reader, no dependencies.",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "bin": {
+    "k8s-manifest-check": "bin/k8s-manifest-check.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "docs",
+    "examples",
+    "research",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test \"test/*.test.js\"",
+    "test:coverage": "node --test --experimental-test-coverage \"test/*.test.js\"",
+    "check": "node tools/check.mjs",
+    "example": "node tools/example.mjs"
+  },
+  "keywords": [
+    "kubernetes",
+    "k8s",
+    "manifest",
+    "yaml",
+    "pod-security-standards",
+    "linter",
+    "devops",
+    "cli"
+  ],
+  "author": "INNERLUXES <info@innerluxes.dev>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/INNERLUXES/k8s-manifest-check.git"
+  },
+  "homepage": "https://innerluxes.dev/software-development/cloud-native-development"
+}
